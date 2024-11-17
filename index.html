@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Player</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<style>
+  /* Custom styles */
+  body {
+    background-color: #000;
+    color: #fff;
+    margin: 0;
+    padding: 0;
+  }
+  #videoPlayer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  video {
+    max-width: 100%;
+    max-height: 100%;
+  }
+  #controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+  }
+  button {
+    background-color: rgba(255, 255, 255, 0.8);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  button:hover {
+    background-color: rgba(255, 255, 255, 1);
+  }
+  #searchBar {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 600px;
+  }
+  input[type="text"] {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #000;
+    font-size: 16px;
+  }
+  input[type="text"]:focus {
+    outline: none;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+  }
+  .loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  #fileList {
+    position: absolute;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 600px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 5px;
+    display: none;
+  }
+  #fileList ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  #fileList li {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+    cursor: pointer;
+  }
+  #fileList li:hover {
+    background-color: rgba(255, 255, 255, 1);
+  }
+  #interactions {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+  }
+  #comments {
+    position: absolute;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 600px;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 5px;
+    display: none;
+  }
+  #comments ul {
+    list-style-type: none;
+    padding: 0;
+  }
+  #comments li {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+  }
+  #comments input {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #000;
+    font-size: 16px;
+  }
+  #comments button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    background-color: rgba(255, 255, 255, 0.8);
+    color: #000;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  #comments button:hover {
+    background-color: rgba(255, 255, 255, 1);
+  }
+  #videoTitle {
+    position: absolute;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+<div id="videoPlayer">
+  <div class="loading">Loading...</div>
+</div>
+<div id="videoTitle"></div>
+<div id="controls">
+  <button onclick="prevVideo()">Previous</button>
+  <button onclick="nextVideo()">Next</button>
+</div>
+<div id="searchBar">
+  <input type="text" id="searchInput" placeholder="Search videos..." oninput="searchVideos()">
+</div>
+<div id="fileList">
+  <ul></ul>
+</div>
+<div id="interactions">
+  <button onclick="toggleComments()">Comments</button>
+  <button onclick="toggleLike()" id="likeButton">Like</button>
+</div>
+<div id="comments">
+  <ul id="commentList"></ul>
+  <input type="text" id="commentInput" placeholder="Write a comment...">
+  <button onclick="addComment()">Post Comment</button>
+</div>
+
+<script>
+let videoFiles = [];
+let currentIndex = 0;
+let isLoading = true;
+const dataUrl = 'data.json';
+
+// Fetch the list of videos from the JSON file
+fetch('videos.json')
+  .then(response => response.json())
+  .then(files => {
+    videoFiles = files;
+    loadVideo(currentIndex);
+  })
+  .catch(error => console.error('Error loading video list:', error));
+
+// Fetch the data from the JSON file
+function fetchData() {
+  return fetch(dataUrl)
+    .then(response => response.json())
+    .catch(error => console.error('Error loading data:', error));
+}
+
+function loadVideo(index) {
+  const player = document.getElementById('videoPlayer');
+  const loading = player.querySelector('.loading');
+  loading.style.display = 'block';
+  player.innerHTML = `<video controls autoplay loop muted playsinline width="100%" height="100%

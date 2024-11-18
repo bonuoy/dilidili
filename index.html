@@ -92,6 +92,28 @@
 <a href="/dilidili/20.mp4" class="button">美女20号</a>
 <a href="/dilidili/21.mp4" class="button">美女21号</a>
 
+        <!-- 按钮组 -->
+<button onclick="loadVideo('1.mp4')">视频1</button>
+<button onclick="loadVideo('2.mp4')">视频2</button>
+<button onclick="loadVideo('3.mp4')">视频3</button>
+<!-- 更多按钮 -->
+
+<!-- JavaScript部分 -->
+<script>
+function loadVideo(videoSrc) {
+  // 获取视频播放器的source元素
+  const videoSource = document.getElementById('videoSource');
+  // 更新视频源
+  videoSource.src = videoSrc;
+  // 获取视频播放器元素
+  const videoPlayer = document.getElementById('videoPlayer');
+  // 加载新的视频源
+  videoPlayer.load();
+  // 播放视频
+  videoPlayer.play();
+}
+</script>
+
 <p>®可莉工作室做</p>
     </div>
 </body>

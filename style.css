@@ -24,9 +24,3 @@ video {
   height: 100%;
   object-fit: cover;
 }
-
-#upload-form {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-}
